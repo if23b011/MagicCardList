@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -41,7 +40,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +80,6 @@ fun MagicCardListApp() {
 fun MainContent(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     var cardListText by rememberSaveable { mutableStateOf("") }
-    var errorMessage by rememberSaveable { mutableStateOf("") }
     var buttonEnabled by rememberSaveable { mutableStateOf(true) }
     var currentPage by rememberSaveable { mutableIntStateOf(1) } //last page is 937
 
@@ -94,25 +91,26 @@ fun MainContent(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 cardListText = ""
-                errorMessage = ""
                 buttonEnabled = false
                 coroutineScope.launch {
                     val magicCardParser = MagicCardParser()
                     try {
-                        cardListText = async(Dispatchers.IO) {
+                        cardListText = withContext(Dispatchers.IO) {
                             loadCards("https://api.magicthegathering.io/v1/cards?page=", currentPage)
-                        }.await()
+                        }
+
                         val magicCard = withContext(Dispatchers.Default) {
                             magicCardParser.parseJson(cardListText)
                         }
-                        cardListText = magicCard.toString()
+
                         cardListText = magicCard.joinToString(separator = "\n") { card ->
                                                 "${card.name}, ${card.type}, ${card.rarity}, ${card.colors.joinToString()}"
                         }
-                        Log.d("Cards", cardListText)
+
                         currentPage++
                     } catch (e: Exception) {
-                        errorMessage = "Fehler: ${e.message}\n\nBitte versuchen Sie es später erneut."
+                        cardListText = "Error: ${e.message}"
+                        Log.e("MainActivity", "Error loading cards: ${e.message}")
                     } finally {
                         buttonEnabled = true
                     }
@@ -124,18 +122,7 @@ fun MainContent(modifier: Modifier = Modifier) {
             Text(text = "Load Cards")
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
-
-        if (errorMessage.isNotEmpty()) {
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
 
         Text(
             text = cardListText,
@@ -150,7 +137,6 @@ fun MainContent(modifier: Modifier = Modifier) {
 fun loadCards(url: String, page: Int): String {
     // https://api.magicthegathering.io/v1/cards?page=
     val urlObject = URL(url + page)
-    Log.d("URL", urlObject.toString())
     val con = urlObject.openConnection() as HttpURLConnection
     try {
         con.requestMethod = "GET"
@@ -163,7 +149,10 @@ fun loadCards(url: String, page: Int): String {
         }
         return result
     } catch (e: Exception) {
-        throw Exception("Fehler beim Laden der Karten: ${e.message}")
+        Log.e("MainActivity", "Error loading cards: ${e.message}")
+        throw Exception("Error loading cards: ${e.message}")
+    } finally {
+        con.disconnect()
     }
 }
 
