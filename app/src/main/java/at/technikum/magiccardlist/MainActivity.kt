@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -79,10 +80,11 @@ fun MagicCardListApp() {
 
 @Composable
 fun MainContent(modifier: Modifier = Modifier) {
-    var cardListText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-    var buttonEnabled by remember { mutableStateOf(true) }
-    var currentPage by remember { mutableIntStateOf(1) } //last page is 937
+    var cardListText by rememberSaveable { mutableStateOf("") }
+    var errorMessage by rememberSaveable { mutableStateOf("") }
+    var buttonEnabled by rememberSaveable { mutableStateOf(true) }
+    var currentPage by rememberSaveable { mutableIntStateOf(1) } //last page is 937
 
     Column(
         modifier = modifier
@@ -92,24 +94,29 @@ fun MainContent(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 cardListText = ""
+                errorMessage = ""
                 buttonEnabled = false
                 coroutineScope.launch {
                     val magicCardParser = MagicCardParser()
-                    cardListText = async(Dispatchers.IO) {
-                        loadCards("https://api.magicthegathering.io/v1/cards?page=", currentPage)
-                    }.await()
-                    val magicCard = withContext(Dispatchers.Default) {
-                        magicCardParser.parseJson(cardListText)
+                    try {
+                        cardListText = async(Dispatchers.IO) {
+                            loadCards("https://api.magicthegathering.io/v1/cards?page=", currentPage)
+                        }.await()
+                        val magicCard = withContext(Dispatchers.Default) {
+                            magicCardParser.parseJson(cardListText)
+                        }
+                        cardListText = magicCard.toString()
+                        cardListText = magicCard.joinToString(separator = "\n") { card ->
+                                                "${card.name}, ${card.type}, ${card.rarity}, ${card.colors.joinToString()}"
+                        }
+                        Log.d("Cards", cardListText)
+                        currentPage++
+                    } catch (e: Exception) {
+                        errorMessage = "Fehler: ${e.message}\n\nBitte versuchen Sie es später erneut."
+                    } finally {
+                        buttonEnabled = true
                     }
-                    cardListText = magicCard.toString()
-                    cardListText = magicCard.joinToString(separator = "\n") { card ->
-                                            "${card.name}, ${card.type}, ${card.rarity}, ${card.colors.joinToString()}"
-                    }
-                    Log.d("Cards", cardListText)
-                    currentPage++
-                    buttonEnabled = true
                 }
-
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = buttonEnabled
@@ -117,7 +124,18 @@ fun MainContent(modifier: Modifier = Modifier) {
             Text(text = "Load Cards")
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Text(
             text = cardListText,
@@ -140,15 +158,13 @@ fun loadCards(url: String, page: Int): String {
         con.connectTimeout = 5000
         val result = String(con.inputStream.readBytes())
         val isEmpty = result.contains("\"cards\":[]")
-
         if (isEmpty) {
             return loadCards(url, 1)
         }
         return result
     } catch (e: Exception) {
-        e.printStackTrace()
+        throw Exception("Fehler beim Laden der Karten: ${e.message}")
     }
-    return "Loading failed"
 }
 
 @Preview(showBackground = true)
