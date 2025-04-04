@@ -1,6 +1,6 @@
 package at.technikum.magiccardlist.parser
 
-import at.technikum.magiccardlist.dto.MagicCardDto
+import at.technikum.magiccardlist.magiccard.data.dto.MagicCardDto
 import org.json.JSONObject
 
 class MagicCardParser {

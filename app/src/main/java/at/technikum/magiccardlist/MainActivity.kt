@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import at.technikum.magiccardlist.parser.MagicCardParser
 import at.technikum.magiccardlist.ui.theme.MagicCardListTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -68,8 +67,7 @@ fun MagicCardListApp() {
                     modifier = Modifier.padding(16.dp),
                 )
             }
-        }
-    ) { innerPadding ->
+        }) { innerPadding ->
         MainContent(
             modifier = Modifier.padding(innerPadding)
         )
@@ -96,7 +94,9 @@ fun MainContent(modifier: Modifier = Modifier) {
                     val magicCardParser = MagicCardParser()
                     try {
                         cardListText = withContext(Dispatchers.IO) {
-                            loadCards("https://api.magicthegathering.io/v1/cards?page=", currentPage)
+                            loadCards(
+                                "https://api.magicthegathering.io/v1/cards?page=", currentPage
+                            )
                         }
 
                         val magicCard = withContext(Dispatchers.Default) {
@@ -104,7 +104,7 @@ fun MainContent(modifier: Modifier = Modifier) {
                         }
 
                         cardListText = magicCard.joinToString(separator = "\n") { card ->
-                                                "${card.name}, ${card.type}, ${card.rarity}, ${card.colors.joinToString()}"
+                            "${card.name}, ${card.type}, ${card.rarity}, ${card.colors.joinToString()}"
                         }
 
                         currentPage++
@@ -115,9 +115,7 @@ fun MainContent(modifier: Modifier = Modifier) {
                         buttonEnabled = true
                     }
                 }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = buttonEnabled
+            }, modifier = Modifier.fillMaxWidth(), enabled = buttonEnabled
         ) {
             Text(text = "Load Cards")
         }
@@ -138,7 +136,7 @@ fun loadCards(url: String, page: Int): String {
     // https://api.magicthegathering.io/v1/cards?page=
     val urlObject = URL(url + page)
     val con = urlObject.openConnection() as HttpURLConnection
-    try {
+    try {^
         con.requestMethod = "GET"
         con.readTimeout = 5000
         con.connectTimeout = 5000

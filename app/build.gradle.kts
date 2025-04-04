@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -40,6 +41,13 @@ android {
 }
 
 dependencies {
+
+    // Retrofit
+// Loading data from an API, @GET, @POST, Retrofit.Builder
+    val retrofit_version = "2.11.0"
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:$retrofit_version")
+    implementation("com.squareup.retrofit2:retrofit:$retrofit_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
