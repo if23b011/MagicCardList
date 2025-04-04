@@ -43,11 +43,14 @@ android {
 dependencies {
 
     // Retrofit
-// Loading data from an API, @GET, @POST, Retrofit.Builder
+    // Loading data from an API, @GET, @POST, Retrofit.Builder
     val retrofit_version = "2.11.0"
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:$retrofit_version")
     implementation("com.squareup.retrofit2:retrofit:$retrofit_version")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    // viewModel()
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

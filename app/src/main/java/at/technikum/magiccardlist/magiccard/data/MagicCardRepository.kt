@@ -1,5 +1,6 @@
 package at.technikum.magiccardlist.magiccard.data
 
+import at.technikum.magiccardlist.magiccard.data.dto.MagicCardDto
 import at.technikum.magiccardlist.magiccard.data.remote.MagicCardRemoteService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
@@ -18,5 +19,9 @@ class MagicCardRepository {
             .asConverterFactory(MediaType.get("application/json")))
         .build()
 
-    val magicCardRemoteService = retrofit.create(MagicCardRemoteService::class.java)
+    private val magicCardRemoteService = retrofit.create(MagicCardRemoteService::class.java)
+
+    suspend fun loadCardPage(page: Int) : List<MagicCardDto> {
+        return magicCardRemoteService.getCardsPage(page).cards
+    }
 }
