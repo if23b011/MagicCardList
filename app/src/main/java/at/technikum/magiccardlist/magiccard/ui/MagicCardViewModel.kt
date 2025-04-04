@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class MagiCardUiState(
     val cards: List<MagicCardDto>,
+    val selectedCard: MagicCardDto? = null,
     val isLoading: Boolean,
     val isError: Boolean,
 )
@@ -22,9 +23,21 @@ class MagicCardViewModel(
 ) : ViewModel() {
 
     private val _magicCardUiState = MutableStateFlow(
-        MagiCardUiState(emptyList(), false, false)
+        MagiCardUiState(emptyList(), null, false, false)
     )
     val magicCardUiState = _magicCardUiState.asStateFlow()
+
+    fun onCardClicked(card: MagicCardDto) {
+        _magicCardUiState.update {
+            it.copy(selectedCard = card)
+        }
+    }
+
+    fun reset() {
+        _magicCardUiState.update {
+            it.copy(selectedCard = null)
+        }
+    }
 
     fun onLoadButtonClicked() {
         _magicCardUiState.update {

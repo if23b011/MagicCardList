@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MagicCardDto(
     val name: String,
-    val type: String,
-    val colors: List<String>,
+    val types: List<String>,
+    val colors: List<String> = emptyList(),
     val imageUrl: String?,
     val text: String,
 )
